@@ -65,8 +65,7 @@ User-level: This is for personal preferences that stay local to a developer's ma
 ### System 4 — Orchestration
 
 11. **Push work down.** Defects the SQL query returned vs warm-tier total. Name the indexed query. Why does the model never see the full history?
-    → Query & Defects: The indexed query is defects_since, verified by my test artifact `tests/test_us01_tiered_state.py` passing test_defects_since_uses_index_and_does_not_load_full_table. During my run using **shift_C_2026-04-30.json**, the query isolated **3 high + 2 medium defects** for the current shift while explicitly logging 0 new defects that required immediate escalation, completely ignoring unrelated historical entries.
-Why the model doesn't see full history: Pushing filtering down to SQLite (the warm tier) prevents context window saturation. As proven by test_gather_new_defects_is_pure_passthrough_to_sql, Claude only receives a severely time-bounded subset. Feeding it the entire factory database would instantly exceed maximum token limits.
+    → Push work down: The indexed query is `defects_since`, which leverages the `idx_defects_ts` index to filter records. As verified by my `shift_output`.txt terminal artifact, the warm-tier database holds a total of 40 defects, but the SQL query successfully filtered and returned only a specific time-bounded slice of 17 recent defects for the model to analyze. The model never sees the full history because pushing the time-filtering down to SQLite guarantees that Claude's context window is only exposed to the active shift's data, preventing token saturation and API crashes over infinite runs.
 
 12. **Crash recovery.** The resume-vs-fresh decision and its staleness threshold (`recovery.py`). Why is a fresh start with an injected summary sometimes more reliable than resuming?
     → Staleness Threshold: The time limit is exactly **30 minutes**, proven by my test artifact showing test_threshold_constant_is_30_minutes passing in the tests/test_us03_crash_recovery.py suite.
@@ -75,6 +74,8 @@ Why a fresh start is more reliable: If the orchestrator crashes and offline time
 13. **Small state.** Byte size of your `hot_state.json`. Why does the budget matter for a system run once per shift, indefinitely?
     → Byte size: According to my `hot_state_size.txt` evidence artifact running `ls -lh ./data/hot_state.json`, my hot state file is aggressively budgeted at just **643 bytes**.
 Why the budget matters: Because System 4 orchestrates an indefinite, multi-shift process, uncapped state accumulation would inevitably lead to **lost-in-the-middle** token degradation and crash the API. Migrating resolved data to the warm/cold tiers and keeping the hot JSON file under 1 KB guarantees the system can run forever without degrading accuracy or hitting token ceilings.
+
+**Fork Isolation**: As implemented in fork.py, when the system initiates a parallel investigation, it creates a strict deep copy of the active state. This ensures that the fork operates in total isolation; any modifications made to the state or scratchpad during the forked investigation cannot mutate the base state or pollute the memory of other concurrent forks, strictly preserving the integrity of the main hot_state.json.
 ---
 
 ## Part 2 — Synthesis
