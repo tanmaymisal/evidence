@@ -1,0 +1,6 @@
+
+(.venv) solution student$ find . -name "*state*.json"
+./data/hot_state.json
+(.venv) solution student$ ls -lh ./data/hot_state.json
+-rw------- 1 student student 643 Sep 24 13:32 ./data/hot_state.json
+(.venv) solution student$ 
