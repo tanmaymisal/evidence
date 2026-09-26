@@ -35,17 +35,15 @@ Difference & Why: The README baseline sample typically shows claims routing in 2
 ### System 2 — Context strategy
 
 5. **The reduction.** From `budget.json`: baseline tokens, assembled tokens, reduction %. Which section dominates the assembled context, and why keep it verbatim?
-   → Token Reduction: According to my run artifact located at `runs/20260925-102805/budget.json` and my terminal output, the baseline transcript token count was **38,708** tokens. By implementing the assembly strategy, I reduced this to **16,836** assembled tokens, achieving a **56.51%** reduction. This strict budgeting successfully reserved **15,789** tokens specifically for the active conversation segment while keeping the total payload lightweight.
+   → The reduction: According to my `budget.json` artifact, the baseline transcript was **38,708** tokens, which the assembly strategy reduced to **16,836** assembled tokens (a **56.51%** reduction). The section that dominates this assembled context is the active conversation segment, which consumed **15,789** tokens. This active segment must be kept verbatim because the model requires perfect, high-resolution context of the most recent interactions to accurately continue the immediate task without losing the thread.
 
    Evidence: `runs/20260925-102805/budget.json`.
 
 6. **Summarize vs preserve.** State the rule for what gets summarized vs kept byte-exact, citing your per-section token numbers.
-   → Answerability: My `runs/20260925-102805` evaluation artifact demonstrates that the model maintained perfect accuracy, scoring 6/6 passed on the evaluation set using the compressed context. However, the [eval-control] block explicitly failed Q6 (the structured status query) when the case facts were stripped out. This proves that dynamically compressing older turns is only safe if you simultaneously extract hard entities (like failure codes and IDs) into a Case Facts block at the top of the prompt; otherwise, critical factual context is lost.
+   → Summarize vs preserve: The architectural rule is that recent active dialogue is kept byte-exact, while older, resolved conversational threads are compressed into semantic summaries. As proven by my token numbers, the older, resolved "refund" and "subscription" threads were aggressively summarized down to just **398** and **463** tokens, respectively. Conversely, the current active segment was preserved verbatim at **15,789** tokens to maintain exact conversational fidelity where the model currently needs it most.
 
 7. **Facts block.** Compare `eval.jsonl` to `eval_control.jsonl`. Which question regressed, and what does that prove?
-   → Regression: In my run artifact, the standard evaluation passed **6/6** questions. However, the [eval-control] run—which explicitly strips out the Case Facts block—failed on **Q6** (identifying the structured status of the payment-method update issue).
-
-What it proves: This regression mathematically proves that semantic summarization is lossy. When you compress older turns, you inevitably lose exact string matches, metadata, and structured entities. Extracting a hard "Case Facts" block (which took only **204** tokens) guarantees that critical identifiers and states remain perfectly answerable, bridging the gap between token reduction and factual accuracy.
+   →Facts block: My standard `eval.json` run successfully passed **6/6 questions**, but the `eval_control.jsonl` run regressed and explicitly failed on **Q6** (the structured status query) when the case facts were removed. This proves that semantic summarization is inherently lossy; when older turns are compressed, exact identifiers and structured states are forgotten. By retaining a hard, byte-exact "Case Facts" block—which cost only **204** tokens—the system guarantees that critical identifiers remain perfectly answerable despite the heavy summarization of older turns.
 
 ### System 3 — Claude Code config
 
