@@ -1,0 +1,3 @@
+(.venv) solution student$ python -m ecommerce_team_config .                       
+OK
+(.venv) solution student$ 
