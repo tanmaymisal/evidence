@@ -1,21 +1,9 @@
-(.venv) solution student$ shift-monitor run-shift --help
-usage: shift-monitor run-shift [-h] --shift {A,B,C} [--warm-db WARM_DB]
-                               [--hot-state HOT_STATE] [--scratchpad SCRATCHPAD]
-                               [--since SINCE] [--recorded-response RECORDED_RESPONSE]
+solution student$ python -c "import json, pathlib; from shift_monitor.warm import WarmStore; store = WarmStore(pathlib.Path('data/warm.sqlite')); store.initialize(); store.insert_many(json.load(open('fixtures/defects.json'))); print('Seeded DB with', store.count(), 'defects')"
 
-options:
-  -h, --help            show this help message and exit
-  --shift {A,B,C}
-  --warm-db WARM_DB
-  --hot-state HOT_STATE
-  --scratchpad SCRATCHPAD
-  --since SINCE         ISO-8601 timestamp; default = 8h ago
-  --recorded-response RECORDED_RESPONSE
-                        Path to a recorded Claude response JSON (offline mode)
-
-(.venv) solution student$ 
-(.venv) solution student$ shift-monitor run-shift --shift C --recorded-response ./fixtures/recorded_responses/shift_C_2026-04-30.json
-2026-09-24 13:32:19,700 shift_monitor.pipeline INFO run_shift start: shift=C since=2026-09-24T05:32:19Z
-2026-09-24 13:32:19,829 shift_monitor.pipeline INFO run_shift done: shift=C new=0
-shift C: 0 new defects
+python -m shift_monitor run-shift --shift C --since "2026-04-01T00:00:00Z" --recorded-response fixtures/recorded_responses/shift_C_2026-04-30.json
+Seeded DB with 40 defects
+2026-09-26 09:39:24,526 shift_monitor.pipeline INFO run_shift start: shift=C since=2026-04-01T00:00:00Z
+2026-09-26 09:39:24,554 shift_monitor.pipeline INFO run_shift done: shift=C new=17
+shift C: 17 new defects
 Shift C 2026-04-30: 3 high + 2 medium defects on capacitor-bank-C-7, all from lot 2026-0430-B (DAR 0.39, ESR ~19 mOhm); 1 low VP-4 vent squeal (repeat). Lot quarantine recommended.
+solution student$ 
